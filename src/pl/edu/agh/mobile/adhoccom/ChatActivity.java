@@ -1,7 +1,8 @@
 package pl.edu.agh.mobile.adhoccom;
 
 import java.io.IOException;
-
+import java.util.ArrayList;
+import java.util.List;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -14,20 +15,23 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
 public class ChatActivity extends Activity implements OnClickListener {
 	private ListView mMessagesView;
 	private Button mSendButton;
 	private EditText mEditMessage;
+	private ArrayAdapter<String> mMessageAdapter;
 	
 	private BroadcastReceiver mBroadcastReceiver;
 	private ChatService mChatService;
 	private ChatDbAdapter mDbAdapter;
+	
+	private static final int MAX_MESSAGES = 20;
 	
 	// Handles the connection between the service and activity
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -47,6 +51,37 @@ public class ChatActivity extends Activity implements OnClickListener {
 		mSendButton.setOnClickListener(this);
 	}
 	
+	private String createMessageString(Cursor c) {
+		StringBuilder msg = new StringBuilder();
+		msg.append(c.getString(1)).append(":\n");
+		msg.append(c.getString(2));
+		return msg.toString();
+	}
+	
+	private void initializeData() {
+		List<String> messages = new ArrayList<String>(MAX_MESSAGES+1);
+    	mMessageAdapter = new ArrayAdapter<String>(this, R.layout.message_layout2, messages);
+    	mMessagesView.setAdapter(mMessageAdapter);
+    	Cursor c = mDbAdapter.fetchMessages(MAX_MESSAGES);
+    	startManagingCursor(c);
+    	c.moveToLast();
+    	while (!c.isFirst()) {
+    		mMessageAdapter.add(createMessageString(c));
+    		c.moveToPrevious();
+    	}
+	}
+	
+	private void updateData(long newMsgId) {
+		Cursor c = mDbAdapter.fetchMessage(newMsgId);
+		if (c != null && c.getCount() > 0) {
+			mMessageAdapter.add(createMessageString(c));
+			if (mMessageAdapter.getCount() > MAX_MESSAGES) {
+				mMessageAdapter.remove(mMessageAdapter.getItem(0));
+			}
+		}
+		c.deactivate();
+	}
+	
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -58,13 +93,13 @@ public class ChatActivity extends Activity implements OnClickListener {
 		startService(svc);
 		Intent bindIntent = new Intent(ChatActivity.this, ChatService.class);
 		bindService(bindIntent, mConnection, Context.BIND_AUTO_CREATE);
-
+		
 		IntentFilter filter = new IntentFilter(ChatService.MESSAGE_RECEIVED);
 		if (mBroadcastReceiver == null)
 			mBroadcastReceiver = new MessageReceiver();
 		registerReceiver(new MessageReceiver(), filter);
 		mDbAdapter = (new ChatDbAdapter(this)).open();
-		fillData();
+		initializeData();
 	}
 	
 	@Override
@@ -107,20 +142,11 @@ public class ChatActivity extends Activity implements OnClickListener {
 		}
 	}
 	
-    private void fillData() {
-    	Cursor c = mDbAdapter.fetchAllMessages();
-    	startManagingCursor(c);
-    	String[] from = new String[] {ChatDbAdapter.SENDER_COLLUMN, ChatDbAdapter.BODY_COLLUMN};
-    	int[] to = new int[] {R.id.message_sender, R.id.message_body};
-    	SimpleCursorAdapter msgAdapter = new SimpleCursorAdapter(this, R.layout.message_layout, c, from, to);
-    	mMessagesView.setAdapter(msgAdapter);
-    }
-	
 	public class MessageReceiver extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			fillData();
+			updateData(intent.getLongExtra("newMsgId", -1));
 		}
 		
 	}

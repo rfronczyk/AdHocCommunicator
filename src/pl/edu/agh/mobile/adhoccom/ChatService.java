@@ -14,6 +14,7 @@ import android.os.IBinder;
 public class ChatService extends Service implements MessageListener {
 
 	public static final String MESSAGE_RECEIVED = "MESSAGE_RECEIVED";
+	public static final String NEW_MSG_ID_EXTRA = "pl.edu.agh.mobile.adhoccom.newMsgId";
 	private final IBinder mBinder = new ChatServiceBinder();
 	private ListeningThread mListeningThread;
 	private ChatDbAdapter mDbAdapter;
@@ -61,6 +62,7 @@ public class ChatService extends Service implements MessageListener {
 		long newMsgId = mDbAdapter.addNewMessage(msg);
 		Intent intent = new Intent(MESSAGE_RECEIVED);
 		intent.putExtra("newMsgId", newMsgId);
+		intent.putExtra(NEW_MSG_ID_EXTRA, newMsgId);
 		sendBroadcast(intent);
 	}
 	

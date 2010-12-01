@@ -61,7 +61,23 @@ public class ChatDbAdapter {
     
 	public Cursor fetchAllMessages() throws SQLException {
 		return mDb.query(MSG_TABLE_NAME, new String[] {ID_COLLUMN, SENDER_COLLUMN,
-                BODY_COLLUMN}, null, null, null, null, null);
+                BODY_COLLUMN}, null, null, null, null, ID_COLLUMN);
+	}
+	
+	public Cursor fetchMessages(int limit) throws SQLException {
+		return mDb.query(MSG_TABLE_NAME, new String[] {ID_COLLUMN, SENDER_COLLUMN,
+                BODY_COLLUMN}, null, null, null, null, ID_COLLUMN + " DESC", Integer.toString(limit));
+	}
+	
+	public Cursor fetchMessage(long id) {
+		Cursor mCursor =
+            mDb.query(true, MSG_TABLE_NAME, new String[] {ID_COLLUMN,
+                    SENDER_COLLUMN, BODY_COLLUMN}, ID_COLLUMN + "=" + id, null,
+                    null, null, null, null);
+        if (mCursor != null) {
+            mCursor.moveToFirst();
+        }
+        return mCursor;
 	}
 	
 	public long addNewMessage(Message msg) {
