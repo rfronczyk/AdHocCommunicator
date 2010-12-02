@@ -1,5 +1,7 @@
 package pl.edu.agh.mobile.adhoccom;
 
+import java.io.IOException;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -94,8 +96,13 @@ public class ChatActivity extends Activity implements OnClickListener {
 	public void onClick(View v) {
 		if (v == mSendButton) {
 			if (mEditMessage.getText().length() > 0) {
-				mChatService.sendMessage(new Message(mEditMessage.getText()
-						.toString(), "Me", ""));
+				try {
+					mChatService.sendMessage(new Message(mEditMessage.getText()
+							.toString(), "Me", ""));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		}
 	}

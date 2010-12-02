@@ -1,18 +1,24 @@
 package pl.edu.agh.mobile.adhoccom;
 
-import java.util.Random;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import pl.edu.agh.mobile.adhoccom.flooder.AdHocFlooder;
+import pl.edu.agh.mobile.adhoccom.flooder.BroadcastAdHocFlooder;
+import pl.edu.agh.mobile.adhoccom.flooder.MessageListener;
 
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 
-public class ChatService extends Service {
+public class ChatService extends Service implements MessageListener {
 
 	public static final String MESSAGE_RECEIVED = "MESSAGE_RECEIVED";
 	private final IBinder mBinder = new ChatServiceBinder();
 	private ListeningThread mListeningThread;
 	private ChatDbAdapter mDbAdapter;
+	private MessageParser messageParser = new MessageParser();
+	private AdHocFlooder adHocFlooder;
 	
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -28,12 +34,14 @@ public class ChatService extends Service {
 	public void onCreate() {
 		super.onCreate();
 		mDbAdapter = (new ChatDbAdapter(this)).open();
+		adHocFlooder = new BroadcastAdHocFlooder(8888, 10, this);
 	}
 	
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
 		mDbAdapter.close();
+		adHocFlooder.stop();
 	}
 	
 	@Override
@@ -43,8 +51,9 @@ public class ChatService extends Service {
 	}
 	
 	
-	public void sendMessage(Message msg) {
+	public void sendMessage(Message msg) throws IOException {
 		// TODO send message
+		adHocFlooder.send(messageParser.getBytes(msg));
 		announceMessage(msg);
 	}
 
@@ -87,13 +96,12 @@ public class ChatService extends Service {
 	private class ListeningThread extends Thread {
 		@Override
 		public void run() {
-			while (true) {
-				try {
-					sleep(5000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
+			ChatService.this.adHocFlooder.start();
 		}
+	}
+
+	@Override
+	public void onMessageReceive(DatagramPacket packet) {
+		announceMessage(messageParser.parse(packet));
 	}
 }
