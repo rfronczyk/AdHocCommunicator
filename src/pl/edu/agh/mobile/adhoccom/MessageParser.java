@@ -4,8 +4,8 @@ import java.net.DatagramPacket;
 
 public class MessageParser {
 
-	public Message parse(DatagramPacket packet) {
-		return new Message(new String(packet.getData()), "", "");
+	public Message parse(byte[] receivedData) {
+		return new Message(new String(receivedData), "", "");
 	}
 
 	public byte[] getBytes(Message msg) {

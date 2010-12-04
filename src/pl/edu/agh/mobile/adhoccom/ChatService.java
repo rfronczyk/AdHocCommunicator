@@ -103,7 +103,7 @@ public class ChatService extends Service implements MessageListener {
 	}
 
 	@Override
-	public void onMessageReceive(DatagramPacket packet) {
-		announceMessage(messageParser.parse(packet));
+	public void onMessageReceive(byte[] receivedData) {
+		announceMessage(messageParser.parse(receivedData));
 	}
 }

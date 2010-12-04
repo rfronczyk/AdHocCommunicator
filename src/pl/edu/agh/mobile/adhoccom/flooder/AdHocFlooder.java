@@ -1,23 +1,20 @@
 package pl.edu.agh.mobile.adhoccom.flooder;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousCloseException;
+import java.nio.channels.DatagramChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 
 
 public abstract class AdHocFlooder {
 	private static final int MAX_PACKET_SIZE = 1500;
-	private static final int SOCKET_TIMEOUT = 1000;
 	private int historySize;
 	private LinkedHashSet<Integer> messagesHistory;
-	private DatagramSocket socket;
+	private DatagramChannel channel;
 	private boolean stop = false;
 	private MessageDigest messageDigest;
 	private MessageListener messageListener;
@@ -39,18 +36,17 @@ public abstract class AdHocFlooder {
 	
 	public void start() {
 		try {
-			socket = getSocket();
-			socket.setSoTimeout(SOCKET_TIMEOUT);
-			byte buffer[] = new byte[MAX_PACKET_SIZE];
-			DatagramPacket datagramPacket = new DatagramPacket(buffer, buffer.length);
+			channel = getChannel();
+			ByteBuffer byteBuffer = ByteBuffer.allocate(MAX_PACKET_SIZE);
 			while(!stop) {
 				try {
-					socket.receive(datagramPacket);
-					ByteArrayOutputStream stream = new ByteArrayOutputStream(datagramPacket.getLength());
-					stream.write(datagramPacket.getData());
-					byte[] receivedData = stream.toByteArray();
-					messageReceived(new DatagramPacket(receivedData, receivedData.length,	datagramPacket.getSocketAddress()));
-				} catch(SocketTimeoutException e) {
+					channel.receive(byteBuffer);
+					byteBuffer.flip();
+					byte[] receivedData = new byte[byteBuffer.remaining()];
+					byteBuffer.get(receivedData);
+					messageReceived(receivedData);
+					byteBuffer.clear();
+				} catch(AsynchronousCloseException e) {
 					
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -59,50 +55,63 @@ public abstract class AdHocFlooder {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
-			if (socket != null) {
-				socket.close();
-				socket = null;
+			if (channel != null) {
+				try {
+					channel.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				channel = null;
 			}
 		}
 		
 	}
 	
-	abstract protected DatagramSocket getSocket() throws IOException;
+	/* the channel returned by this function must implement ByteChannel InterruptibleChannel
+	 * interfaces and must by connected to the proper port
+	 */
+	abstract protected DatagramChannel getChannel() throws IOException;
 	
-	private byte[] getMessageDigest(DatagramPacket packet) {
-		messageDigest.update(packet.getData());
+	private byte[] getMessageDigest(byte[] receivedData) {
+		messageDigest.update(receivedData);
 		return messageDigest.digest();
 	}
 
-	private void messageReceived(DatagramPacket datagramPacket) {
+	private void messageReceived(byte[] receivedData) {
 		boolean messageInHistory = false;
 		synchronized(this) {
-			messageInHistory = messagesHistory.contains(new String(getMessageDigest(datagramPacket)).hashCode());
+			messageInHistory = messagesHistory.contains(new String(getMessageDigest(receivedData)).hashCode());
 		}
 		if (!messageInHistory) {
 			try {
-				send(datagramPacket);
+				send(receivedData);
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-			onMessageReceive(datagramPacket);
+			onMessageReceive(receivedData);
 		}
 	}
 
-	protected void onMessageReceive(DatagramPacket datagramPacket) {
+	protected void onMessageReceive(byte[] receivedData) {
 		if (this.messageListener != null) {
-			messageListener.onMessageReceive(datagramPacket);
+			messageListener.onMessageReceive(receivedData);
 		}
 	}
 
 	public void stop() {
 		this.stop = true;
+		try {
+			this.channel.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
-	public synchronized void send(DatagramPacket packet) throws IOException {
-		if (socket != null) {
-			socket.send(packet);
-			messagesHistory.add(new String(getMessageDigest(packet)).hashCode());
+	public synchronized void send(byte[] data) throws IOException {
+		if (channel != null && channel.isOpen()) {
+			ByteBuffer sendBuffer = ByteBuffer.wrap(data);
+			channel.send(sendBuffer, new InetSocketAddress("255.255.255.255", 8888));
+			messagesHistory.add(new String(getMessageDigest(data)).hashCode());
 			if (messagesHistory.size() > historySize) {
 				Iterator<Integer> it = messagesHistory.iterator();
 				it.next();
@@ -110,6 +119,4 @@ public abstract class AdHocFlooder {
 			}
 		}
 	}		
-	
-	public abstract void send(byte[] data) throws SocketException, IOException;
 }

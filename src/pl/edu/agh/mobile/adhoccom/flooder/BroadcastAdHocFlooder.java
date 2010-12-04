@@ -2,9 +2,10 @@ package pl.edu.agh.mobile.adhoccom.flooder;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.nio.channels.ByteChannel;
+import java.nio.channels.DatagramChannel;
 
 
 public class BroadcastAdHocFlooder extends AdHocFlooder {
@@ -17,15 +18,6 @@ public class BroadcastAdHocFlooder extends AdHocFlooder {
 	public BroadcastAdHocFlooder(int port, int historySize, MessageListener listener) {
 		super(historySize, listener);
 		this.port = port;
-	}
-	
-	public void send(byte[] data) throws SocketException, IOException {
-		send(new DatagramPacket(data, data.length, new InetSocketAddress("255.255.255.255", port)));
-	}
-	
-	@Override
-	protected DatagramSocket getSocket() throws IOException {
-		return new DatagramSocket(this.port);
 	}
 	
 	public static void main(String[] args) {
@@ -49,26 +41,36 @@ public class BroadcastAdHocFlooder extends AdHocFlooder {
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 				byte[] messageData = ("Message " + String.valueOf(messagePrefix * 100 + i)).getBytes();
-				DatagramPacket packet = null;
 				try {
-					packet = new DatagramPacket(messageData, messageData.length, new InetSocketAddress("255.255.255.255", 8888));
-				} catch (SocketException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				try {
-					this.flooder.send(packet);
+					this.flooder.send(messageData);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
-			
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
 			flooder.stop();
 		}
+	}
+
+	protected void onMessageReceive(byte[] message) {
+		System.out.println(new String(message));
+	}
+
+	@Override
+	protected DatagramChannel getChannel() throws IOException {
+		DatagramChannel channel = DatagramChannel.open();
+		channel.configureBlocking(true);
+		DatagramSocket socket = channel.socket();
+		socket.setBroadcast(true);
+		socket.bind(new InetSocketAddress(port));
+		return channel;
 	}
 
 }
