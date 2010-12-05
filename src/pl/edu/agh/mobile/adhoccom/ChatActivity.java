@@ -60,7 +60,7 @@ public class ChatActivity extends Activity implements OnClickListener {
 	
 	private void initializeData() {
 		List<String> messages = new ArrayList<String>(MAX_MESSAGES+1);
-	mMessageAdapter = new ArrayAdapter<String>(this, R.layout.message_layout, messages);
+		mMessageAdapter = new ArrayAdapter<String>(this, R.layout.message_layout2, messages);
     	mMessagesView.setAdapter(mMessageAdapter);
     	Cursor c = mDbAdapter.fetchMessages(MAX_MESSAGES);
     	startManagingCursor(c);
