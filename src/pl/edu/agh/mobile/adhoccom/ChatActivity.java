@@ -64,10 +64,11 @@ public class ChatActivity extends Activity implements OnClickListener {
     	mMessagesView.setAdapter(mMessageAdapter);
     	Cursor c = mDbAdapter.fetchMessages(MAX_MESSAGES);
     	startManagingCursor(c);
-    	c.moveToLast();
-    	while (!c.isFirst()) {
-    		mMessageAdapter.add(createMessageString(c));
-    		c.moveToPrevious();
+    	if (c.moveToLast()) {
+    		while (!c.isFirst()) {
+    			mMessageAdapter.add(createMessageString(c));
+    			c.moveToPrevious();
+    		}
     	}
 	}
 	
