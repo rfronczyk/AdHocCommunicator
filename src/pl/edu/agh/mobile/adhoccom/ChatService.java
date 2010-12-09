@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 
+
 public class ChatService extends Service implements MessageListener {
 
 	public static final String MESSAGE_RECEIVED = "MESSAGE_RECEIVED";
@@ -20,40 +21,40 @@ public class ChatService extends Service implements MessageListener {
 	private ChatDbAdapter mDbAdapter;
 	private MessageParser messageParser = new MessageParser();
 	private AdHocFlooder adHocFlooder;
-	
+
 	@Override
 	public IBinder onBind(Intent intent) {
 		return mBinder;
 	}
-	
+
 	private void startService() {
 		mListeningThread = new ListeningThread();
 		mListeningThread.start();
 	}
-	
+
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		mDbAdapter = (new ChatDbAdapter(this)).open();
 		adHocFlooder = new BroadcastAdHocFlooder(8888, 10, this);
 	}
-	
+
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
 		mDbAdapter.close();
 		adHocFlooder.stop();
 	}
-	
+
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		startService();
+		if (startId == 1) { // start listening threads only once
+			startService();
+		}
 		return Service.START_STICKY;
 	}
-	
-	
+
 	public void sendMessage(Message msg) throws IOException {
-		// TODO send message
 		adHocFlooder.send(messageParser.getBytes(msg));
 		announceMessage(msg);
 	}
@@ -65,36 +66,29 @@ public class ChatService extends Service implements MessageListener {
 		intent.putExtra(NEW_MSG_ID_EXTRA, newMsgId);
 		sendBroadcast(intent);
 	}
-	
+
 	/**
-	 * Ta metoda ma umożliwiać dołączenie do grupy - 
-	 * to znaczy, że serwis gdy odbierze wiadomość z tej grupy to
-	 * wysle notyfikację do activities
+	 * Tell service to start receiving messages from given group
 	 */
-	public void joinGroup(/*TODO choose parameter*/) {
+	public void joinGroup(/* TODO choose parameter */) {
 		// TODO implement
 		throw new UnsupportedOperationException("not implemented yet");
 	}
-	
-	/** 
-	 * podobnie jak wyżej
+
+	/**
+	 * Tell service to stop receiving messages from given group
 	 */
 	public void leaveGroup(/* TODO choose parameter */) {
 		// TODO implement
 		throw new UnsupportedOperationException("not implemented yet");
 	}
-	
+
 	public class ChatServiceBinder extends Binder {
 		public ChatService getService() {
 			return ChatService.this;
 		}
 	}
-	
-	/**
-	 * 
-	 * @author piotrek
-	 * W tym wątku będzie nasluchiwanie na wiadomości.
-	 */
+
 	private class ListeningThread extends Thread {
 		@Override
 		public void run() {

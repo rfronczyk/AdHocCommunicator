@@ -13,8 +13,8 @@ public class ChatDbAdapter {
 	private static final String MSG_TABLE_NAME = "messages";
 	private static final int DB_VERSION = 2;
 	private static final String DB_CREATE_QUERY = 
-		"create table messages (_id integer primary key autoincrement, "
-        + "sender text not null, body text not null);";
+		"create table messages (_id integer primary key autoincrement, " +
+        "sender text not null, body text not null);";
 	private static final String TAG = "ChatDbAdapter";
 	
 	public static final String ID_COLLUMN = "_id";

@@ -13,6 +13,7 @@ import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
@@ -31,7 +32,10 @@ public class ChatActivity extends Activity implements OnClickListener {
 	private ChatService mChatService;
 	private ChatDbAdapter mDbAdapter;
 	
+	private AppConfig config;
+	
 	private static final int MAX_MESSAGES = 20;
+	private static final String TAG = "OnClickListener";
 	
 	// Handles the connection between the service and activity
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -100,6 +104,7 @@ public class ChatActivity extends Activity implements OnClickListener {
 			mBroadcastReceiver = new MessageReceiver();
 		registerReceiver(new MessageReceiver(), filter);
 		mDbAdapter = (new ChatDbAdapter(this)).open();
+		config = new AppConfig();
 		initializeData();
 	}
 	
@@ -123,10 +128,6 @@ public class ChatActivity extends Activity implements OnClickListener {
 	public void onPause() {
 		super.onPause();
 	}
-	
-	private void showToast(String text) {
-		Toast.makeText(this, text, Toast.LENGTH_LONG).show();
-	}
 
 	@Override
 	public void onClick(View v) {
@@ -134,11 +135,11 @@ public class ChatActivity extends Activity implements OnClickListener {
 			if (mEditMessage.getText().length() > 0) {
 				try {
 					mChatService.sendMessage(new Message(mEditMessage.getText()
-							.toString(), "Me", ""));
+							.toString(), config.getUserNickname(), ""));
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					Log.d(TAG, "Exception while sending msg", e);
 				}
+				mEditMessage.setText("");
 			}
 		}
 	}

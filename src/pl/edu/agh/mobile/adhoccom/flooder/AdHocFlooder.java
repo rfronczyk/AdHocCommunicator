@@ -47,7 +47,7 @@ public abstract class AdHocFlooder {
 				try {
 					socket.receive(datagramPacket);
 					ByteArrayOutputStream stream = new ByteArrayOutputStream(datagramPacket.getLength());
-					stream.write(datagramPacket.getData());
+					stream.write(datagramPacket.getData(), 0, datagramPacket.getLength());
 					byte[] receivedData = stream.toByteArray();
 					messageReceived(new DatagramPacket(receivedData, receivedData.length,	datagramPacket.getSocketAddress()));
 				} catch(SocketTimeoutException e) {
@@ -101,8 +101,8 @@ public abstract class AdHocFlooder {
 	
 	public synchronized void send(DatagramPacket packet) throws IOException {
 		if (socket != null) {
-			socket.send(packet);
 			messagesHistory.add(new String(getMessageDigest(packet)).hashCode());
+			socket.send(packet);
 			if (messagesHistory.size() > historySize) {
 				Iterator<Integer> it = messagesHistory.iterator();
 				it.next();
