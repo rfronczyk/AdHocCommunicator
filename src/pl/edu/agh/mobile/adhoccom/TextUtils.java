@@ -6,8 +6,8 @@ import android.text.style.CharacterStyle;
 
 public class TextUtils {
 	/**
-	 * Metoda przeklejona z netu :). Ułatwia formatowanie tekstu.
-	 *
+	 * From http://www.androidengineer.com/2010/08/easy-method-for-formatting-android.html
+	 * Method for formatting text in CharSequence
 	 */
 	public static CharSequence setSpanBetweenTokens(CharSequence text,
 			String token, CharacterStyle... cs) {

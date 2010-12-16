@@ -11,15 +11,17 @@ import android.util.Log;
 public class ChatDbAdapter {
 	private static final String DB_NAME = "adhoccommdb";
 	private static final String MSG_TABLE_NAME = "messages";
-	private static final int DB_VERSION = 2;
+	private static final int DB_VERSION = 3;
 	private static final String DB_CREATE_QUERY = 
 		"create table messages (_id integer primary key autoincrement, " +
-        "sender text not null, body text not null);";
+        "sender text not null, body text not null, date integer not null, chatgroup text not null);";
 	private static final String TAG = "ChatDbAdapter";
 	
 	public static final String ID_COLLUMN = "_id";
 	public static final String SENDER_COLLUMN = "sender";
 	public static final String BODY_COLLUMN = "body";
+	public static final String DATE_COLLUMN = "date";
+	public static final String GROUP_COLUMN = "chatgroup";
 	
     private DatabaseHelper mDbHelper;
     private SQLiteDatabase mDb;
@@ -40,7 +42,7 @@ public class ChatDbAdapter {
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 			Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
                     + newVersion + ", which will destroy all old data");
-            db.execSQL("DROP TABLE IF EXISTS notes");
+            db.execSQL("DROP TABLE IF EXISTS messages");
             onCreate(db);
 		}
 	}
@@ -69,10 +71,22 @@ public class ChatDbAdapter {
                 BODY_COLLUMN}, null, null, null, null, ID_COLLUMN + " DESC", Integer.toString(limit));
 	}
 	
+	public Cursor featchMessages(int limit, String group) {
+		// TODO sort by date
+		return mDb.query(MSG_TABLE_NAME, 
+				new String[] {ID_COLLUMN, SENDER_COLLUMN, BODY_COLLUMN, DATE_COLLUMN}, 
+				"chatgroup = ?", 
+				new String[]{group}, 
+				null, 
+				null, 
+				ID_COLLUMN + " DESC", 
+				Integer.toString(limit));
+	}
+	
 	public Cursor fetchMessage(long id) {
 		Cursor mCursor =
             mDb.query(true, MSG_TABLE_NAME, new String[] {ID_COLLUMN,
-                    SENDER_COLLUMN, BODY_COLLUMN}, ID_COLLUMN + "=" + id, null,
+                    SENDER_COLLUMN, BODY_COLLUMN, DATE_COLLUMN, GROUP_COLUMN}, ID_COLLUMN + "=" + id, null,
                     null, null, null, null);
         if (mCursor != null) {
             mCursor.moveToFirst();
@@ -84,6 +98,8 @@ public class ChatDbAdapter {
 		ContentValues initialValues = new ContentValues();
         initialValues.put(SENDER_COLLUMN, msg.getSender());
         initialValues.put(BODY_COLLUMN, msg.getBody());
+        initialValues.put(GROUP_COLUMN, msg.getGroup());
+        initialValues.put(DATE_COLLUMN, msg.getDate());
 
         return mDb.insert(MSG_TABLE_NAME, null, initialValues);
 	}

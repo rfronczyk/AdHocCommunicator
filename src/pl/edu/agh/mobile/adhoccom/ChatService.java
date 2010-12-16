@@ -2,10 +2,12 @@ package pl.edu.agh.mobile.adhoccom;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.util.LinkedList;
+import java.util.List;
+
 import pl.edu.agh.mobile.adhoccom.flooder.AdHocFlooder;
 import pl.edu.agh.mobile.adhoccom.flooder.BroadcastAdHocFlooder;
 import pl.edu.agh.mobile.adhoccom.flooder.MessageListener;
-
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
@@ -16,11 +18,13 @@ public class ChatService extends Service implements MessageListener {
 
 	public static final String MESSAGE_RECEIVED = "MESSAGE_RECEIVED";
 	public static final String NEW_MSG_ID_EXTRA = "pl.edu.agh.mobile.adhoccom.newMsgId";
+	public static final String NEW_MSG_GROUP_EXTRA = "pl.edu.agh.mobile.adhoccom.newMsgGroup";
 	private final IBinder mBinder = new ChatServiceBinder();
 	private ListeningThread mListeningThread;
 	private ChatDbAdapter mDbAdapter;
 	private MessageParser messageParser = new MessageParser();
 	private AdHocFlooder adHocFlooder;
+	private List<String> chatGroups = new LinkedList<String>();
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -64,23 +68,39 @@ public class ChatService extends Service implements MessageListener {
 		Intent intent = new Intent(MESSAGE_RECEIVED);
 		intent.putExtra("newMsgId", newMsgId);
 		intent.putExtra(NEW_MSG_ID_EXTRA, newMsgId);
+		intent.putExtra(NEW_MSG_GROUP_EXTRA, msg.getGroup());
 		sendBroadcast(intent);
 	}
 
+	public List<String> getChatGroups() {
+		return chatGroups;
+	}
+	
 	/**
-	 * Tell service to start receiving messages from given group
+	 * Join given group. Starts receiving massages for given group
+	 * @param groupName
+	 * @param groupCode
 	 */
-	public void joinGroup(/* TODO choose parameter */) {
-		// TODO implement
-		throw new UnsupportedOperationException("not implemented yet");
+	public void joinGroup(String groupName, String groupCode) {
+		if (!chatGroups.contains(groupName)) {
+			chatGroups.add(groupName);
+		}
+		// TODO save password
 	}
 
 	/**
-	 * Tell service to stop receiving messages from given group
+	 * Leave given group. Stops receiving messages for given group
+	 * @param groupName
 	 */
-	public void leaveGroup(/* TODO choose parameter */) {
-		// TODO implement
-		throw new UnsupportedOperationException("not implemented yet");
+	public void leaveGroup(String groupName) throws ChatServiceException {
+		if (Message.DEFAULT_GROUP.equals(groupName)) {
+			throw new ChatServiceException(getString(R.string.leave_default_group_error));
+		}
+		chatGroups.remove(groupName);
+	}
+	
+	public boolean isAttachedToGroup(String groupName) {
+		return chatGroups.contains(groupName);
 	}
 
 	public class ChatServiceBinder extends Binder {
