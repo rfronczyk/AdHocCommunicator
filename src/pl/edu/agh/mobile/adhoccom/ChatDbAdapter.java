@@ -98,7 +98,7 @@ public class ChatDbAdapter {
 		ContentValues initialValues = new ContentValues();
         initialValues.put(SENDER_COLLUMN, msg.getSender());
         initialValues.put(BODY_COLLUMN, msg.getBody());
-        initialValues.put(GROUP_COLUMN, msg.getGroup());
+        initialValues.put(GROUP_COLUMN, msg.getGroupName());
         initialValues.put(DATE_COLLUMN, msg.getDate());
 
         return mDb.insert(MSG_TABLE_NAME, null, initialValues);

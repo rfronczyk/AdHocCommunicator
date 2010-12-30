@@ -20,7 +20,7 @@ public class BroadcastAdHocFlooder extends AdHocFlooder {
 	}
 	
 	public void send(byte[] data) throws SocketException, IOException {
-		send(new DatagramPacket(data, data.length, new InetSocketAddress("255.255.255.255", port)));
+		send(new DatagramPacket(data, data.length, new InetSocketAddress("192.168.0.100", port)));
 	}
 	
 	@Override

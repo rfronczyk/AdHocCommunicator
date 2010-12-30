@@ -35,7 +35,7 @@ public class ChatActivity extends Activity implements OnClickListener {
 	private ChatService mChatService;
 	private boolean mServiceBound = false;
 	private ChatDbAdapter mDbAdapter;
-	private String mCurrentGroup = Message.DEFAULT_GROUP;
+	private String mCurrentGroup = ChatService.DEFAULT_GROUP;
 
 	private AppConfig mConfig;
 
@@ -48,7 +48,7 @@ public class ChatActivity extends Activity implements OnClickListener {
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			mChatService = ((ChatService.ChatServiceBinder) service)
 					.getService();
-			mChatService.joinGroup(Message.DEFAULT_GROUP, "");
+			mChatService.joinGroup(ChatService.DEFAULT_GROUP, "");
 			initializeData();
 		}
 
@@ -234,7 +234,7 @@ public class ChatActivity extends Activity implements OnClickListener {
 				}
 			} else {
 				if (!mChatService.isAttachedToGroup(mCurrentGroup)) {
-					mCurrentGroup = Message.DEFAULT_GROUP;
+					mCurrentGroup = ChatService.DEFAULT_GROUP;
 					initializeData();
 				}
 			}

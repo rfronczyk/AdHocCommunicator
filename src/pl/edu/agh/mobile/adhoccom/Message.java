@@ -1,17 +1,18 @@
 package pl.edu.agh.mobile.adhoccom;
 
+import java.net.DatagramPacket;
+
+import com.google.protobuf.InvalidProtocolBufferException;
+
+import pl.edu.agh.mobile.adhoccom.ChatProtocol.ChatMessage;
+
 public class Message {
 	private String body;
 	private String sender;
 	private int date;
-	private String group;
-	
-	public static final String DEFAULT_GROUP = "default";
-	
-	public Message(String body, String sender, int date) {
-		this(body, sender, date, DEFAULT_GROUP);
-	}
-	
+	private String groupName;
+	private String groupChalenge;
+
 	/**
 	 * 
 	 * @param body
@@ -23,7 +24,13 @@ public class Message {
 		this.body = body;
 		this.sender = sender;
 		this.date = date;
-		this.group = group;
+		this.groupName = group;
+	}
+
+	public Message(String body, String sender, int date, String groupName,
+			String groupChalenge) {
+		this(body, sender, date, groupName);
+		this.groupChalenge = groupChalenge;
 	}
 
 	public String getBody() {
@@ -50,12 +57,20 @@ public class Message {
 		this.date = date;
 	}
 	
-	public String getGroup() {
-		return group;
+	public String getGroupName() {
+		return groupName;
 	}
 
-	public void setGroup(String group) {
-		this.group = group;
+	public void setGroupName(String group) {
+		this.groupName = group;
+	}
+	
+	public String getGroupChalenge() {
+		return groupChalenge;
+	}
+
+	public void setGroupChalenge(String groupChalenge) {
+		this.groupChalenge = groupChalenge;
 	}
 
 	@Override
@@ -63,5 +78,26 @@ public class Message {
 		StringBuilder retVal = new StringBuilder();
 		retVal.append(sender).append(": ").append(body);
 		return retVal.toString();
+	}
+
+	public byte[] toByteArray() {
+		ChatMessage.Builder chatMessage = ChatMessage.newBuilder();
+		chatMessage.setBody(getBody());
+		chatMessage.setDate(getDate());
+		chatMessage.setSender(getSender());
+		chatMessage.setGroupName(getGroupName());
+		if (getGroupChalenge() != null) {
+			chatMessage.setGroupChalenge(getGroupChalenge());
+		}
+		
+		return chatMessage.build().toByteArray();
+	}
+
+	public static Message parseFrom(DatagramPacket packet) throws InvalidProtocolBufferException {
+		ChatMessage chatMessage = ChatMessage.parseFrom(packet.getData());
+		Message msg = new Message(chatMessage.getBody(), chatMessage.getSender(),
+								  chatMessage.getDate(), chatMessage.getGroupName(), 
+								  chatMessage.getGroupChalenge());
+		return msg;
 	}
 }
