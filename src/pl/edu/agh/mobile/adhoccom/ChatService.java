@@ -147,9 +147,11 @@ public class ChatService extends Service implements MessageListener {
 			if (!msg.getGroupName().equals(DEFAULT_GROUP)) {
 				if (msg.getGroupChalenge().equals(getGroupChalenge(msg.getGroupName()))) {
 					msg.setBody(decryptMessage(msg.getBody(), msg.getGroupName()));
+					announceMessage(msg);
 				}
+			} else {
+				announceMessage(msg);
 			}
-			announceMessage(msg);
 		} catch (InvalidProtocolBufferException e) {
 			Log.i(LOGGER_TAG, "Exception while parsing message: " + e.getMessage());
 		}
