@@ -41,6 +41,7 @@ public class ChatService extends Service implements MessageListener {
 	private AdHocFlooder adHocFlooder;
 	private Map<String, String> chatGroups = new HashMap<String, String>();
 	private MessageDigest messageDigest;
+	private AppConfig config;
 	
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -55,8 +56,10 @@ public class ChatService extends Service implements MessageListener {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		config = AppConfig.getInstance();
 		mDbAdapter = (new ChatDbAdapter(this)).open();
-		adHocFlooder = new BroadcastAdHocFlooder(8888, 10, this);
+		adHocFlooder = new BroadcastAdHocFlooder(config.getPort(), config.getAddress(),
+												 config.getFlooderHistorySize(), this);
 		try {
 			messageDigest = MessageDigest.getInstance("SHA-1");
 		} catch (NoSuchAlgorithmException e) {

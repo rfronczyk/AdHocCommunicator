@@ -177,7 +177,7 @@ public class ChatActivity extends Activity implements OnClickListener {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.chat_layout);
-		mConfig = new AppConfig();
+		mConfig = AppConfig.getInstance();
 		initializeWidgets();
 		mDbAdapter = (new ChatDbAdapter(this)).open();
 		Intent svc = new Intent(this, ChatService.class);

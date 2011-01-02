@@ -10,17 +10,20 @@ import java.net.SocketException;
 public class BroadcastAdHocFlooder extends AdHocFlooder {
 	
 	private int port;
-
-	public BroadcastAdHocFlooder(int port, int historySize) {
-		this(port, historySize, null);	}
+	private InetSocketAddress address;
 	
-	public BroadcastAdHocFlooder(int port, int historySize, MessageListener listener) {
+	public BroadcastAdHocFlooder(int port, String address, int historySize) {
+		this(port, address, historySize, null);	
+	}
+	
+	public BroadcastAdHocFlooder(int port, String address, int historySize, MessageListener listener) {
 		super(historySize, listener);
+		this.address = new InetSocketAddress(address, port);
 		this.port = port;
 	}
 	
 	public void send(byte[] data) throws SocketException, IOException {
-		send(new DatagramPacket(data, data.length, new InetSocketAddress("192.168.0.100", port)));
+		send(new DatagramPacket(data, data.length, address));
 	}
 	
 	@Override
@@ -29,7 +32,7 @@ public class BroadcastAdHocFlooder extends AdHocFlooder {
 	}
 	
 	public static void main(String[] args) {
-		BroadcastAdHocFlooder flooder = new BroadcastAdHocFlooder(8888, 10);
+		BroadcastAdHocFlooder flooder = new BroadcastAdHocFlooder(8888, "192,168.0.100", 10);
 		Thread worker = new Thread(flooder.new Sender(flooder, 1));
 		worker.start();
 		flooder.start();
