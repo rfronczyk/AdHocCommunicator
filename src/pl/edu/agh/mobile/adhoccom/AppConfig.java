@@ -1,19 +1,44 @@
 package pl.edu.agh.mobile.adhoccom;
 
+import java.util.LinkedList;
+import java.util.List;
+
+import android.content.Context;
+import android.content.Intent;
+
 public class AppConfig {
 	private String userNickname = "Me";
+	public static final String USER_NICKNAME_ID = "USER_NICKNAME_ID";
 	private int maxMessages = 20;
-	private int port = 8888;
+	public static final String MAX_MESSAGES_ID = "MAX_MESSAGES_ID";
+	private int port = 8889;
+	public static final String PORT_ID = "PORT_ID";
 	private String address = "192.168.0.100";
+	public static final String ADDRESS_ID = "ADDRESS_ID";
 	private static AppConfig instance;
 	private int flooderHistorySize = 20;
+	public static final String FLOODER_HISTORY_SIZE_ID = "FLOODER_HISTORY_SIZE_ID";
+	private Context appContext;
+	private List<String> updatedFields = new LinkedList<String>();
+	public static final String CONFIG_CHANGED = "CONFIG CHANGED";
 	
+	public Context getAppContext() {
+		return appContext;
+	}
+
+	public void setAppContext(Context appContext) {
+		this.appContext = appContext;
+	}
+
 	public int getFlooderHistorySize() {
 		return flooderHistorySize;
 	}
 
 	public void setFlooderHistorySize(int flooderHistorySize) {
-		this.flooderHistorySize = flooderHistorySize;
+		if (this.flooderHistorySize != flooderHistorySize) {
+			this.flooderHistorySize = flooderHistorySize;
+			updatedFields.add(FLOODER_HISTORY_SIZE_ID);
+		}
 	}
 
 	private AppConfig() {
@@ -28,11 +53,14 @@ public class AppConfig {
 	}
 	
 	public int getPort() {
-		return port;
+		return port;	
 	}
 
 	public void setPort(int port) {
-		this.port = port;
+		if (this.port != port) {
+			this.port = port;
+			updatedFields.add(PORT_ID);
+		}
 	}
 
 	public String getAddress() {
@@ -40,7 +68,10 @@ public class AppConfig {
 	}
 
 	public void setAddress(String address) {
-		this.address = address;
+		if (!this.address.equals(address)) {
+			this.address = address;
+			updatedFields.add(ADDRESS_ID);
+		}
 	}
 
 	public String getUserNickname() {
@@ -48,7 +79,10 @@ public class AppConfig {
 	}
 
 	public void setUserNickname(String userNickname) {
-		this.userNickname = userNickname;
+		if (this.userNickname.equals(userNickname)) {
+			this.userNickname = userNickname;
+			updatedFields.add(USER_NICKNAME_ID);
+		}
 	}
 	
 	public int getMaxMessages() {
@@ -56,10 +90,21 @@ public class AppConfig {
 	}
 	
 	public void setMaxMessages(int maxMessages) {
-		this.maxMessages = maxMessages;
+		if (this.maxMessages != maxMessages) {
+			this.maxMessages = maxMessages;
+			updatedFields.add(MAX_MESSAGES_ID);
+		}
 	}
 	
 	public void saveConfig() {
+		if (appContext != null && updatedFields.size() > 0) {
+			Intent intent = new Intent(CONFIG_CHANGED);
+			for(String field : updatedFields) {
+				intent.putExtra(field, 1);
+			}
+			appContext.sendBroadcast(intent);
+			updatedFields.clear();
+		}
 		// TODO implement config saving
 	}
 	

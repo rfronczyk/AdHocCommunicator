@@ -24,4 +24,8 @@
 	<string name="group_leave_question">Do you really want to leave group</string>
 	<string name="application_leave_question">Do you really want to quit?</string>
 	<string name="cant_lave_group">You can\'t leave group</string>
+	<string name="ip_label">IP:</string>
+	<string name="port_label">Port:</string>
+	<string name="apply_label">Apply</string>
+	<string name="cancel_label">Cancel</string>
 </resources>

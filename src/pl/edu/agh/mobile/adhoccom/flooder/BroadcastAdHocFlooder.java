@@ -22,6 +22,22 @@ public class BroadcastAdHocFlooder extends AdHocFlooder {
 		this.port = port;
 	}
 	
+	public int getPort() {
+		return port;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
+	}
+
+	public InetSocketAddress getAddress() {
+		return address;
+	}
+
+	public void setAddress(InetSocketAddress address) {
+		this.address = address;
+	}
+	
 	public void send(byte[] data) throws SocketException, IOException {
 		send(new DatagramPacket(data, data.length, address));
 	}
@@ -73,5 +89,4 @@ public class BroadcastAdHocFlooder extends AdHocFlooder {
 			flooder.stop();
 		}
 	}
-
 }

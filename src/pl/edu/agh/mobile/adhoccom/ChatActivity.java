@@ -43,6 +43,7 @@ public class ChatActivity extends Activity implements OnClickListener {
 
 	public static final int JOIN_GROUP_REQ = 0;
 	public static final int MANAGE_GROUPS_REQ = 1;
+	public static final int SETTINGS_REQ = 2;
 
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
@@ -128,7 +129,7 @@ public class ChatActivity extends Activity implements OnClickListener {
 	}
 
 	private void settings() {
-		// TODO run SettingsActivity
+		startActivity(new Intent(this, SettingsActivity.class));
 	}
 
 	private void quit() {
@@ -178,6 +179,7 @@ public class ChatActivity extends Activity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.chat_layout);
 		mConfig = AppConfig.getInstance();
+		mConfig.setAppContext(getApplicationContext());
 		initializeWidgets();
 		mDbAdapter = (new ChatDbAdapter(this)).open();
 		Intent svc = new Intent(this, ChatService.class);

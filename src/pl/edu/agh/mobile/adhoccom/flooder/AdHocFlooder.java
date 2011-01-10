@@ -38,6 +38,7 @@ public abstract class AdHocFlooder {
 	}
 	
 	public void start() {
+		stop = false;
 		try {
 			socket = getSocket();
 			socket.setSoTimeout(SOCKET_TIMEOUT);

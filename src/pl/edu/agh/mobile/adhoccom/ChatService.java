@@ -2,6 +2,7 @@ package pl.edu.agh.mobile.adhoccom;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.InetSocketAddress;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -15,11 +16,15 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 
+import pl.edu.agh.mobile.adhoccom.ChatActivity.MessageReceiver;
 import pl.edu.agh.mobile.adhoccom.flooder.AdHocFlooder;
 import pl.edu.agh.mobile.adhoccom.flooder.BroadcastAdHocFlooder;
 import pl.edu.agh.mobile.adhoccom.flooder.MessageListener;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
@@ -42,6 +47,8 @@ public class ChatService extends Service implements MessageListener {
 	private Map<String, String> chatGroups = new HashMap<String, String>();
 	private MessageDigest messageDigest;
 	private AppConfig config;
+	private BroadcastReceiver mBroadcastReceiver;
+	private boolean reload;
 	
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -65,6 +72,9 @@ public class ChatService extends Service implements MessageListener {
 		} catch (NoSuchAlgorithmException e) {
 			Log.e(LOGGER_TAG, "SHA-1 diggest not supported: " + e.getMessage());
 		}
+		
+		IntentFilter filter = new IntentFilter(AppConfig.CONFIG_CHANGED);
+		registerReceiver(new ConfigChangedReceiver(), filter);
 	}
 
 	@Override
@@ -139,7 +149,11 @@ public class ChatService extends Service implements MessageListener {
 	private class ListeningThread extends Thread {
 		@Override
 		public void run() {
-			ChatService.this.adHocFlooder.start();
+			ChatService.this.reload = true;
+			while(ChatService.this.reload) {
+				ChatService.this.reload = false;
+				ChatService.this.adHocFlooder.start();
+			}
 		}
 	}
 
@@ -206,5 +220,23 @@ public class ChatService extends Service implements MessageListener {
 		messageDigest.update(chatGroups.get(groupName).getBytes());
 		messageDigest.update(SECRET.getBytes());
 		return new String(messageDigest.digest());
+	}
+	
+	private class ConfigChangedReceiver extends BroadcastReceiver {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			BroadcastAdHocFlooder flooder = (BroadcastAdHocFlooder)ChatService.this.adHocFlooder;
+			AppConfig config = AppConfig.getInstance();
+
+			if (intent.hasExtra(AppConfig.PORT_ID) || intent.hasExtra(AppConfig.ADDRESS_ID)) {
+				flooder.setPort(config.getPort());
+				flooder.setAddress(new InetSocketAddress(config.getAddress(), config.getPort()));
+				
+				ChatService.this.reload = true;
+				ChatService.this.adHocFlooder.stop();
+			}
+		}
+		
 	}
 }

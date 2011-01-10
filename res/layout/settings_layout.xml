@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:orientation="vertical"
+  android:layout_width="wrap_content"
+  android:layout_height="wrap_content"
+  android:shrinkColumns="1"
+  android:stretchColumns="1">
+  
+  	<TableRow>
+    	<TextView
+        	android:layout_column="0"
+            android:text="@string/ip_label"
+            android:padding="3dip" />
+        <EditText
+            android:text=""
+            android:gravity="right"
+            android:padding="3dip"
+            android:id="@+id/ip_input" />
+    </TableRow>
+    
+    <TableRow>
+    	<TextView
+        	android:layout_column="0"
+            android:text="@string/port_label"
+            android:padding="3dip" />
+        <EditText
+            android:text=""
+            android:gravity="right"
+            android:padding="3dip"
+            android:id="@+id/port_input" />
+    </TableRow>
+    
+    <TableRow>
+		<Button android:id="@+id/apply_button"
+		     	android:layout_height="wrap_content"
+     			android:width="60px" 
+            	android:text="@string/apply_label" />
+		<Button android:id="@+id/cancel_button"
+				android:layout_height="wrap_content"
+     			android:width="60px" 
+            	android:text="@string/cancel_label" />            
+    </TableRow>
+</TableLayout>
