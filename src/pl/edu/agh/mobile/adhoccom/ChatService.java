@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +17,6 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 
-import pl.edu.agh.mobile.adhoccom.ChatActivity.MessageReceiver;
 import pl.edu.agh.mobile.adhoccom.flooder.AdHocFlooder;
 import pl.edu.agh.mobile.adhoccom.flooder.BroadcastAdHocFlooder;
 import pl.edu.agh.mobile.adhoccom.flooder.MessageListener;
@@ -29,6 +29,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 
@@ -95,7 +96,7 @@ public class ChatService extends Service implements MessageListener {
 	public void sendMessage(Message msg) throws IOException {
 		announceMessage(msg);
 		if (!msg.getGroupName().equals(DEFAULT_GROUP)) {
-			msg.setBody(encryptMessage(msg.getBody(), msg.getGroupName()));
+			msg.setBodyBytes(encryptMessage(msg.getBodyBytes(), msg.getGroupName()));
 			msg.setGroupChalenge(getGroupChalenge(msg.getGroupName()));
 		}
 		adHocFlooder.send(msg.toByteArray());
@@ -162,8 +163,9 @@ public class ChatService extends Service implements MessageListener {
 		try {
 			Message msg = Message.parseFrom(packet);
 			if (!msg.getGroupName().equals(DEFAULT_GROUP)) {
-				if (msg.getGroupChalenge().equals(getGroupChalenge(msg.getGroupName()))) {
-					msg.setBody(decryptMessage(msg.getBody(), msg.getGroupName()));
+				if (chatGroups.containsKey(msg.getGroupName())
+					&& Arrays.equals(msg.getGroupChalenge(), getGroupChalenge(msg.getGroupName()))) {
+					msg.setBodyBytes(decryptMessage(msg.getBodyBytes(), msg.getGroupName()));
 					announceMessage(msg);
 				}
 			} else {
@@ -175,22 +177,22 @@ public class ChatService extends Service implements MessageListener {
 
 	}
 	
-	private String encryptMessage(String body, String groupName) {
-		String encryptedMessage = null;
+	private byte[] encryptMessage(byte[] body, String groupName) {
+		byte[] encryptedMessage = null;
 		try {
 			Cipher cipher = getCipher(Cipher.ENCRYPT_MODE, chatGroups.get(groupName));
-			encryptedMessage = new String(cipher.doFinal(body.getBytes()));
+			encryptedMessage = cipher.doFinal(body);
 		} catch(Exception e) {
 			Log.e(LOGGER_TAG, "Encryption error: " + e.getMessage());
 		}
 		return encryptedMessage;
 	}
 	
-	private String decryptMessage(String body, String groupName) {
-		String decryptedMessage = null;
+	private byte[] decryptMessage(byte[] body, String groupName) {
+		byte[] decryptedMessage = null;
 		try {
 			Cipher cipher = getCipher(Cipher.DECRYPT_MODE, chatGroups.get(groupName));
-			decryptedMessage = new String(cipher.doFinal(body.getBytes()));
+			decryptedMessage = cipher.doFinal(body);
 		} catch(Exception e) {
 			Log.e(LOGGER_TAG, "Decryption error: " + e.getMessage()); 
 		}
@@ -214,12 +216,13 @@ public class ChatService extends Service implements MessageListener {
     	return cipher;
 	}
 
-	private String getGroupChalenge(String groupName) {
+	private byte[] getGroupChalenge(String groupName) {
+		messageDigest.reset();
 		messageDigest.update(SECRET.getBytes());
 		messageDigest.update(groupName.getBytes());
 		messageDigest.update(chatGroups.get(groupName).getBytes());
 		messageDigest.update(SECRET.getBytes());
-		return new String(messageDigest.digest());
+		return messageDigest.digest();
 	}
 	
 	private class ConfigChangedReceiver extends BroadcastReceiver {

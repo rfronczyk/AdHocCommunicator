@@ -2,16 +2,17 @@ package pl.edu.agh.mobile.adhoccom;
 
 import java.net.DatagramPacket;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import pl.edu.agh.mobile.adhoccom.ChatProtocol.ChatMessage;
 
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+
 public class Message {
-	private String body;
+	private byte[] body;
 	private String sender;
 	private int date;
 	private String groupName;
-	private String groupChalenge;
+	private byte[] groupChalenge;
 
 	/**
 	 * 
@@ -20,24 +21,32 @@ public class Message {
 	 * @param date Number of <b>seconds</b> from 1970
 	 * @param group
 	 */
-	public Message(String body, String sender, int date, String group) {
+	public Message(byte[] body, String sender, int date, String group) {
 		this.body = body;
 		this.sender = sender;
 		this.date = date;
 		this.groupName = group;
 	}
 
-	public Message(String body, String sender, int date, String groupName,
-			String groupChalenge) {
+	public Message(byte[] body, String sender, int date, String groupName,
+			byte[] groupChalenge) {
 		this(body, sender, date, groupName);
 		this.groupChalenge = groupChalenge;
 	}
-
+	
 	public String getBody() {
+		return new String(body);
+	}
+	
+	public byte[] getBodyBytes() {
 		return body;
 	}
 
 	public void setBody(String body) {
+		this.body = body.getBytes();
+	}
+	
+	public void setBodyBytes(byte[] body) {
 		this.body = body;
 	}
 
@@ -65,29 +74,29 @@ public class Message {
 		this.groupName = group;
 	}
 	
-	public String getGroupChalenge() {
+	public byte[] getGroupChalenge() {
 		return groupChalenge;
 	}
 
-	public void setGroupChalenge(String groupChalenge) {
+	public void setGroupChalenge(byte[] groupChalenge) {
 		this.groupChalenge = groupChalenge;
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder retVal = new StringBuilder();
-		retVal.append(sender).append(": ").append(body);
+		retVal.append(sender).append(": ").append(getBody());
 		return retVal.toString();
 	}
 
 	public byte[] toByteArray() {
 		ChatMessage.Builder chatMessage = ChatMessage.newBuilder();
-		chatMessage.setBody(getBody());
+		chatMessage.setBody(ByteString.copyFrom(getBodyBytes()));
 		chatMessage.setDate(getDate());
 		chatMessage.setSender(getSender());
 		chatMessage.setGroupName(getGroupName());
 		if (getGroupChalenge() != null) {
-			chatMessage.setGroupChalenge(getGroupChalenge());
+			chatMessage.setGroupChalenge(ByteString.copyFrom(getGroupChalenge()));
 		}
 		
 		return chatMessage.build().toByteArray();
@@ -95,9 +104,9 @@ public class Message {
 
 	public static Message parseFrom(DatagramPacket packet) throws InvalidProtocolBufferException {
 		ChatMessage chatMessage = ChatMessage.parseFrom(packet.getData());
-		Message msg = new Message(chatMessage.getBody(), chatMessage.getSender(),
+		Message msg = new Message(chatMessage.getBody().toByteArray(), chatMessage.getSender(),
 								  chatMessage.getDate(), chatMessage.getGroupName(), 
-								  chatMessage.getGroupChalenge());
+								  chatMessage.getGroupChalenge().toByteArray());
 		return msg;
 	}
 }

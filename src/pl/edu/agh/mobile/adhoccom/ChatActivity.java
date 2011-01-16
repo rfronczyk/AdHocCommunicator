@@ -203,7 +203,7 @@ public class ChatActivity extends Activity implements OnClickListener {
 			if (mEditMessage.getText().length() > 0) {
 				try {
 					mChatService.sendMessage(new Message(mEditMessage.getText()
-							.toString(), mConfig.getUserNickname(),
+							.toString().getBytes(), mConfig.getUserNickname(),
 							(int) (System.currentTimeMillis() / 100),
 							mCurrentGroup));
 				} catch (IOException e) {

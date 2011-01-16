@@ -1,9 +1,9 @@
 package pl.edu.agh.mobile.adhoccom;
 
 message ChatMessage {
-	required string body = 1;
+	required bytes body = 1;
 	required string sender = 2;
 	required int32 date = 3;
 	required string group_name = 4;
-	optional string group_chalenge = 5;
+	optional bytes group_chalenge = 5;
 }

@@ -35,12 +35,12 @@ public final class ChatProtocol {
       return pl.edu.agh.mobile.adhoccom.ChatProtocol.internal_static_pl_edu_agh_mobile_adhoccom_ChatMessage_fieldAccessorTable;
     }
     
-    // required string body = 1;
+    // required bytes body = 1;
     public static final int BODY_FIELD_NUMBER = 1;
     private boolean hasBody;
-    private java.lang.String body_ = "";
+    private com.google.protobuf.ByteString body_ = com.google.protobuf.ByteString.EMPTY;
     public boolean hasBody() { return hasBody; }
-    public java.lang.String getBody() { return body_; }
+    public com.google.protobuf.ByteString getBody() { return body_; }
     
     // required string sender = 2;
     public static final int SENDER_FIELD_NUMBER = 2;
@@ -63,12 +63,12 @@ public final class ChatProtocol {
     public boolean hasGroupName() { return hasGroupName; }
     public java.lang.String getGroupName() { return groupName_; }
     
-    // optional string group_chalenge = 5;
+    // optional bytes group_chalenge = 5;
     public static final int GROUP_CHALENGE_FIELD_NUMBER = 5;
     private boolean hasGroupChalenge;
-    private java.lang.String groupChalenge_ = "";
+    private com.google.protobuf.ByteString groupChalenge_ = com.google.protobuf.ByteString.EMPTY;
     public boolean hasGroupChalenge() { return hasGroupChalenge; }
-    public java.lang.String getGroupChalenge() { return groupChalenge_; }
+    public com.google.protobuf.ByteString getGroupChalenge() { return groupChalenge_; }
     
     private void initFields() {
     }
@@ -84,7 +84,7 @@ public final class ChatProtocol {
                         throws java.io.IOException {
       getSerializedSize();
       if (hasBody()) {
-        output.writeString(1, getBody());
+        output.writeBytes(1, getBody());
       }
       if (hasSender()) {
         output.writeString(2, getSender());
@@ -96,7 +96,7 @@ public final class ChatProtocol {
         output.writeString(4, getGroupName());
       }
       if (hasGroupChalenge()) {
-        output.writeString(5, getGroupChalenge());
+        output.writeBytes(5, getGroupChalenge());
       }
       getUnknownFields().writeTo(output);
     }
@@ -109,7 +109,7 @@ public final class ChatProtocol {
       size = 0;
       if (hasBody()) {
         size += com.google.protobuf.CodedOutputStream
-          .computeStringSize(1, getBody());
+          .computeBytesSize(1, getBody());
       }
       if (hasSender()) {
         size += com.google.protobuf.CodedOutputStream
@@ -125,7 +125,7 @@ public final class ChatProtocol {
       }
       if (hasGroupChalenge()) {
         size += com.google.protobuf.CodedOutputStream
-          .computeStringSize(5, getGroupChalenge());
+          .computeBytesSize(5, getGroupChalenge());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -326,7 +326,7 @@ public final class ChatProtocol {
               break;
             }
             case 10: {
-              setBody(input.readString());
+              setBody(input.readBytes());
               break;
             }
             case 18: {
@@ -342,7 +342,7 @@ public final class ChatProtocol {
               break;
             }
             case 42: {
-              setGroupChalenge(input.readString());
+              setGroupChalenge(input.readBytes());
               break;
             }
           }
@@ -350,14 +350,14 @@ public final class ChatProtocol {
       }
       
       
-      // required string body = 1;
+      // required bytes body = 1;
       public boolean hasBody() {
         return result.hasBody();
       }
-      public java.lang.String getBody() {
+      public com.google.protobuf.ByteString getBody() {
         return result.getBody();
       }
-      public Builder setBody(java.lang.String value) {
+      public Builder setBody(com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
@@ -431,14 +431,14 @@ public final class ChatProtocol {
         return this;
       }
       
-      // optional string group_chalenge = 5;
+      // optional bytes group_chalenge = 5;
       public boolean hasGroupChalenge() {
         return result.hasGroupChalenge();
       }
-      public java.lang.String getGroupChalenge() {
+      public com.google.protobuf.ByteString getGroupChalenge() {
         return result.getGroupChalenge();
       }
-      public Builder setGroupChalenge(java.lang.String value) {
+      public Builder setGroupChalenge(com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
@@ -479,9 +479,9 @@ public final class ChatProtocol {
   static {
     java.lang.String[] descriptorData = {
       "\n\023chat_protocol.proto\022\032pl.edu.agh.mobile" +
-      ".adhoccom\"e\n\013ChatMessage\022\014\n\004body\030\001 \002(\t\022\016" +
+      ".adhoccom\"e\n\013ChatMessage\022\014\n\004body\030\001 \002(\014\022\016" +
       "\n\006sender\030\002 \002(\t\022\014\n\004date\030\003 \002(\005\022\022\n\ngroup_na" +
-      "me\030\004 \002(\t\022\026\n\016group_chalenge\030\005 \001(\t"
+      "me\030\004 \002(\t\022\026\n\016group_chalenge\030\005 \001(\014"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
