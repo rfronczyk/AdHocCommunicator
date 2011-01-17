@@ -1,6 +1,6 @@
 package pl.edu.agh.mobile.adhoccom;
 
-import pl.edu.agh.mobile.adhoccom.chatMessage.Message;
+import pl.edu.agh.mobile.adhoccom.chatprotocol.Message;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;

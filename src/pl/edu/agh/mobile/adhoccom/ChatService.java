@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import pl.edu.agh.mobile.adhoccom.chatMessage.ChatMessageException;
-import pl.edu.agh.mobile.adhoccom.chatMessage.Message;
+import pl.edu.agh.mobile.adhoccom.chatprotocol.ChatMessageException;
+import pl.edu.agh.mobile.adhoccom.chatprotocol.Message;
 import pl.edu.agh.mobile.adhoccom.flooder.AdHocFlooder;
 import pl.edu.agh.mobile.adhoccom.flooder.BroadcastAdHocFlooder;
 import pl.edu.agh.mobile.adhoccom.flooder.MessageListener;

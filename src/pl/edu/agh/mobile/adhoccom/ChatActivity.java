@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import pl.edu.agh.mobile.adhoccom.chatMessage.Message;
+import pl.edu.agh.mobile.adhoccom.chatprotocol.Message;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
