@@ -3,20 +3,13 @@ package pl.edu.agh.mobile.adhoccom;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.PBEParameterSpec;
-
+import pl.edu.agh.mobile.adhoccom.chatMessage.ChatMessageException;
+import pl.edu.agh.mobile.adhoccom.chatMessage.Message;
 import pl.edu.agh.mobile.adhoccom.flooder.AdHocFlooder;
 import pl.edu.agh.mobile.adhoccom.flooder.BroadcastAdHocFlooder;
 import pl.edu.agh.mobile.adhoccom.flooder.MessageListener;
@@ -28,9 +21,6 @@ import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
-
-import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 
 
 public class ChatService extends Service implements MessageListener {
@@ -163,7 +153,7 @@ public class ChatService extends Service implements MessageListener {
 			} else {
 				announceMessage(msg);
 			}
-		} catch (InvalidProtocolBufferException e) {
+		} catch (ChatMessageException e) {
 			Log.i(LOGGER_TAG, "Exception while parsing message: " + e.getMessage());
 		}
 
