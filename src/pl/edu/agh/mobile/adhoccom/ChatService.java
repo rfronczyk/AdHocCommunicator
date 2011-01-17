@@ -1,8 +1,11 @@
 package pl.edu.agh.mobile.adhoccom;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +41,25 @@ public class ChatService extends Service implements MessageListener {
 	private AppConfig config;
 	private BroadcastReceiver mBroadcastReceiver;
 	private boolean reload;
+	private boolean connected = true;
+	private InputStream inputStream;
+	private OutputStream outputStream;
+	
+	private Thread messageReceivingThread = new Thread(new Runnable(){
+		@Override
+		public void run() {
+			while (connected) {
+				try {
+					Message msg = Message.parseFrom(inputStream);
+					sendMessage(new Message(msg.getBody().getBytes(), msg.getSender(), msg.getDate(), msg.getGroupName()), false);
+				} catch (IOException e) {
+					e.printStackTrace();
+				} catch(ChatMessageException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	});
 	
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -47,6 +69,7 @@ public class ChatService extends Service implements MessageListener {
 	private void startService() {
 		mListeningThread = new ListeningThread();
 		mListeningThread.start();
+		messageReceivingThread.start();
 	}
 
 	@Override
@@ -58,6 +81,13 @@ public class ChatService extends Service implements MessageListener {
 												 config.getFlooderHistorySize(), this);	
 		IntentFilter filter = new IntentFilter(AppConfig.CONFIG_CHANGED);
 		registerReceiver(new ConfigChangedReceiver(), filter);
+		try {
+			Socket s = new Socket("10.0.0.2", 1234);
+			inputStream = s.getInputStream();
+			outputStream = s.getOutputStream();
+		} catch(Exception e) {
+			
+		}
 	}
 
 	@Override
@@ -74,11 +104,24 @@ public class ChatService extends Service implements MessageListener {
 		}
 		return Service.START_STICKY;
 	}
+	
+	public void sendMessage(Message msg, boolean ble) throws IOException {
+		announceMessage(msg);
+		if (!msg.getGroupName().equals(DEFAULT_GROUP)) {
+			msg.encrypt(chatGroups.get(msg.getGroupName()));
+		}
+		adHocFlooder.send(msg.toByteArray());
+	}
 
 	public void sendMessage(Message msg) throws IOException {
 		announceMessage(msg);
 		if (!msg.getGroupName().equals(DEFAULT_GROUP)) {
 			msg.encrypt(chatGroups.get(msg.getGroupName()));
+		}
+		try {
+			msg.writeTo(outputStream);
+		} catch (IOException ex) {
+			
 		}
 		adHocFlooder.send(msg.toByteArray());
 	}

@@ -205,7 +205,7 @@ public class ChatActivity extends Activity implements OnClickListener {
 				try {
 					mChatService.sendMessage(new Message(mEditMessage.getText()
 							.toString().getBytes(), mConfig.getUserNickname(),
-							(int) (System.currentTimeMillis() / 100),
+							(int) (System.currentTimeMillis() / 1000),
 							mCurrentGroup));
 				} catch (IOException e) {
 					Log.d(TAG, "Exception while sending msg", e);
