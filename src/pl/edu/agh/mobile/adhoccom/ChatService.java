@@ -40,13 +40,11 @@ public class ChatService extends Service implements MessageListener {
 	public static final String NEW_MSG_GROUP_EXTRA = "pl.edu.agh.mobile.adhoccom.newMsgGroup";
 	public static final String DEFAULT_GROUP = "default";
 	private static final String LOGGER_TAG = "ChatService";
-	private static final String SECRET = "p28etluthlu0Luh";
 	private final IBinder mBinder = new ChatServiceBinder();
 	private ListeningThread mListeningThread;
 	private ChatDbAdapter mDbAdapter;
 	private AdHocFlooder adHocFlooder;
 	private Map<String, String> chatGroups = new HashMap<String, String>();
-	private MessageDigest messageDigest;
 	private AppConfig config;
 	private BroadcastReceiver mBroadcastReceiver;
 	private boolean reload;
@@ -67,13 +65,7 @@ public class ChatService extends Service implements MessageListener {
 		config = AppConfig.getInstance();
 		mDbAdapter = (new ChatDbAdapter(this)).open();
 		adHocFlooder = new BroadcastAdHocFlooder(config.getPort(), config.getAddress(),
-												 config.getFlooderHistorySize(), this);
-		try {
-			messageDigest = MessageDigest.getInstance("SHA-1");
-		} catch (NoSuchAlgorithmException e) {
-			Log.e(LOGGER_TAG, "SHA-1 diggest not supported: " + e.getMessage());
-		}
-		
+												 config.getFlooderHistorySize(), this);	
 		IntentFilter filter = new IntentFilter(AppConfig.CONFIG_CHANGED);
 		registerReceiver(new ConfigChangedReceiver(), filter);
 	}
@@ -96,8 +88,7 @@ public class ChatService extends Service implements MessageListener {
 	public void sendMessage(Message msg) throws IOException {
 		announceMessage(msg);
 		if (!msg.getGroupName().equals(DEFAULT_GROUP)) {
-			msg.setBodyBytes(encryptMessage(msg.getBodyBytes(), msg.getGroupName()));
-			msg.setGroupChalenge(getGroupChalenge(msg.getGroupName()));
+			msg.encrypt(chatGroups.get(msg.getGroupName()));
 		}
 		adHocFlooder.send(msg.toByteArray());
 	}
@@ -163,9 +154,10 @@ public class ChatService extends Service implements MessageListener {
 		try {
 			Message msg = Message.parseFrom(packet);
 			if (!msg.getGroupName().equals(DEFAULT_GROUP)) {
+				String pass = chatGroups.get(msg.getGroupName());
 				if (chatGroups.containsKey(msg.getGroupName())
-					&& Arrays.equals(msg.getGroupChalenge(), getGroupChalenge(msg.getGroupName()))) {
-					msg.setBodyBytes(decryptMessage(msg.getBodyBytes(), msg.getGroupName()));
+					&& msg.cenBeDecrypted(pass)) {
+					msg.decrypt(pass);
 					announceMessage(msg);
 				}
 			} else {
@@ -175,54 +167,6 @@ public class ChatService extends Service implements MessageListener {
 			Log.i(LOGGER_TAG, "Exception while parsing message: " + e.getMessage());
 		}
 
-	}
-	
-	private byte[] encryptMessage(byte[] body, String groupName) {
-		byte[] encryptedMessage = null;
-		try {
-			Cipher cipher = getCipher(Cipher.ENCRYPT_MODE, chatGroups.get(groupName));
-			encryptedMessage = cipher.doFinal(body);
-		} catch(Exception e) {
-			Log.e(LOGGER_TAG, "Encryption error: " + e.getMessage());
-		}
-		return encryptedMessage;
-	}
-	
-	private byte[] decryptMessage(byte[] body, String groupName) {
-		byte[] decryptedMessage = null;
-		try {
-			Cipher cipher = getCipher(Cipher.DECRYPT_MODE, chatGroups.get(groupName));
-			decryptedMessage = cipher.doFinal(body);
-		} catch(Exception e) {
-			Log.e(LOGGER_TAG, "Decryption error: " + e.getMessage()); 
-		}
-		return decryptedMessage;
-	}
-	
-	private Cipher getCipher(int mode, String pass) {
-		Cipher cipher = null;
-		try {
-			PBEKeySpec keySpec = new PBEKeySpec(pass.toCharArray());
-			SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-			SecretKey key = keyFactory.generateSecret(keySpec);
-			byte[] salt = { 0x7d, 0x60, 0x43, 0x5f, 0x02, (byte) 0xe9, (byte) 0xe0, (byte) 0xae };
-			PBEParameterSpec paramSpec = new PBEParameterSpec(salt, 30);
-			cipher = Cipher.getInstance("PBEWithMD5AndDES");
-			cipher.init(mode, key, paramSpec);
-		} catch(Exception e) {
-			Log.e(LOGGER_TAG, "Cipher error: " + e.getMessage());
-		}
-		
-    	return cipher;
-	}
-
-	private byte[] getGroupChalenge(String groupName) {
-		messageDigest.reset();
-		messageDigest.update(SECRET.getBytes());
-		messageDigest.update(groupName.getBytes());
-		messageDigest.update(chatGroups.get(groupName).getBytes());
-		messageDigest.update(SECRET.getBytes());
-		return messageDigest.digest();
 	}
 	
 	private class ConfigChangedReceiver extends BroadcastReceiver {

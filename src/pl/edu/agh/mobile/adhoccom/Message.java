@@ -1,8 +1,19 @@
 package pl.edu.agh.mobile.adhoccom;
 
 import java.net.DatagramPacket;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
 
 import pl.edu.agh.mobile.adhoccom.ChatProtocol.ChatMessage;
+
+import android.util.Log;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -13,6 +24,22 @@ public class Message {
 	private int date;
 	private String groupName;
 	private byte[] groupChalenge;
+	private static MessageDigest messageDigest;
+	private static final String SECRET = "p28etluthlu0Luh";
+	private static final String LOGGER_TAG = "MessageClass";
+	private static PBEParameterSpec paramSpec;
+	private static byte[] salt = { 0x7d, 0x60, 0x43, 0x5f, 0x02, (byte) 0xe9, (byte) 0xe0, (byte) 0xae };
+	private static SecretKeyFactory keyFactory; 
+	
+	static {
+		try {
+			messageDigest = MessageDigest.getInstance("SHA-1");
+			keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
+			paramSpec = new PBEParameterSpec(salt, 30);
+		} catch (NoSuchAlgorithmException e) {
+			Log.e(LOGGER_TAG, "SHA-1 diggest not supported: " + e.getMessage());
+		}
+	}
 
 	/**
 	 * 
@@ -74,14 +101,6 @@ public class Message {
 		this.groupName = group;
 	}
 	
-	public byte[] getGroupChalenge() {
-		return groupChalenge;
-	}
-
-	public void setGroupChalenge(byte[] groupChalenge) {
-		this.groupChalenge = groupChalenge;
-	}
-
 	@Override
 	public String toString() {
 		StringBuilder retVal = new StringBuilder();
@@ -95,8 +114,8 @@ public class Message {
 		chatMessage.setDate(getDate());
 		chatMessage.setSender(getSender());
 		chatMessage.setGroupName(getGroupName());
-		if (getGroupChalenge() != null) {
-			chatMessage.setGroupChalenge(ByteString.copyFrom(getGroupChalenge()));
+		if (groupChalenge != null) {
+			chatMessage.setGroupChalenge(ByteString.copyFrom(groupChalenge));
 		}
 		
 		return chatMessage.build().toByteArray();
@@ -108,5 +127,63 @@ public class Message {
 								  chatMessage.getDate(), chatMessage.getGroupName(), 
 								  chatMessage.getGroupChalenge().toByteArray());
 		return msg;
+	}
+
+	public void encrypt(String pass) {
+		body = encryptBody(body, pass);
+		groupChalenge = generateChalenge(groupName, pass);
+	}
+	
+	public void decrypt(String pass) {
+		body = decryptBody(body, pass);
+	}
+
+	static private synchronized byte[] generateChalenge(String groupName, String pass) {
+		messageDigest.reset();
+		messageDigest.update(SECRET.getBytes());
+		messageDigest.update(groupName.getBytes());
+		messageDigest.update(pass.getBytes());
+		messageDigest.update(SECRET.getBytes());
+		return messageDigest.digest();
+	}
+
+	private byte[] encryptBody(byte[] body, String pass) {
+		byte[] encryptedMessage = null;
+		try {
+			Cipher cipher = getCipher(Cipher.ENCRYPT_MODE, pass);
+			encryptedMessage = cipher.doFinal(body);
+		} catch(Exception e) {
+			Log.e(LOGGER_TAG, "Encryption error: " + e.getMessage());
+		}
+		return encryptedMessage;
+	}
+	
+	private byte[] decryptBody(byte[] body, String pass) {
+		byte[] decryptedMessage = null;
+		try {
+			Cipher cipher = getCipher(Cipher.DECRYPT_MODE, pass);
+			decryptedMessage = cipher.doFinal(body);
+		} catch(Exception e) {
+			Log.e(LOGGER_TAG, "Decryption error: " + e.getMessage()); 
+		}
+		return decryptedMessage;
+	}
+
+	public boolean cenBeDecrypted(String pass) {
+		return Arrays.equals(groupChalenge, generateChalenge(this.groupName, pass));
+	}
+	
+	private static Cipher getCipher(int mode, String pass) {
+		Cipher cipher = null;
+		try {
+			PBEKeySpec keySpec = new PBEKeySpec(pass.toCharArray());
+			SecretKey key = keyFactory.generateSecret(keySpec);
+			cipher = Cipher.getInstance("PBEWithMD5AndDES");
+			cipher.init(mode, key, paramSpec);
+		} catch(Exception e) {
+			Log.e(LOGGER_TAG, "Cipher error: " + e.getMessage());
+		}
+		
+    	return cipher;
 	}
 }
