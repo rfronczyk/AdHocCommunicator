@@ -84,9 +84,7 @@ public class ChatService extends Service implements MessageListener {
 	
 	public void sendMessage(Message msg) throws IOException {
 		announceMessage(msg);
-		if (!msg.getGroupName().equals(DEFAULT_GROUP)) {
-			msg.encrypt(chatGroups.get(msg.getGroupName()));
-		}
+		msg.encrypt(chatGroups.get(msg.getGroupName()));
 		adHocFlooder.send(msg.toByteArray());
 		serverConnection.send(msg);
 	}
@@ -160,14 +158,9 @@ public class ChatService extends Service implements MessageListener {
 	}
 	
 	public void onMessageReceive(Message msg) {
-		if (!msg.getGroupName().equals(DEFAULT_GROUP)) {
-			String pass = chatGroups.get(msg.getGroupName());
-			if (chatGroups.containsKey(msg.getGroupName())
-				&& msg.cenBeDecrypted(pass)) {
-				msg.decrypt(pass);
-				announceMessage(msg);
-			}
-		} else {
+		String pass = chatGroups.get(msg.getGroupName());
+		if (msg.canBeDecrypted(pass)) {
+			msg.decrypt(pass);
 			announceMessage(msg);
 		}
 	}
