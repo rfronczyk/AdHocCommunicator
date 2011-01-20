@@ -19,6 +19,8 @@
 
     <activity android:name=".SettingsActivity"
     		  android:label="@string/settings"/>
+    <activity android:name=".ServerConnectionActivity"
+		  android:label="@string/server_connection"/>
 </application>
 
 

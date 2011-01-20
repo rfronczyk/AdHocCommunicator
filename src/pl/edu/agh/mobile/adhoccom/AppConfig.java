@@ -15,6 +15,10 @@ public class AppConfig {
 	public static final String PORT_ID = "PORT_ID";
 	private String address = "192.168.0.100";
 	public static final String ADDRESS_ID = "ADDRESS_ID";
+	private int serverPort = 0;
+	public static final String SERVER_PORT_ID = "SERVER_PORT_ID";
+	private String serverAddress = "";
+	public static final String SERVER_ADDRESS_ID = "SERVER_ADDRESS_ID";
 	private static AppConfig instance;
 	private int flooderHistorySize = 20;
 	public static final String FLOODER_HISTORY_SIZE_ID = "FLOODER_HISTORY_SIZE_ID";
@@ -22,6 +26,28 @@ public class AppConfig {
 	private List<String> updatedFields = new LinkedList<String>();
 	public static final String CONFIG_CHANGED = "CONFIG CHANGED";
 	
+	public int getServerPort() {
+		return serverPort;
+	}
+
+	public void setServerPort(int serverPort) {
+		if (this.serverPort != serverPort) {
+			this.serverPort = serverPort;
+			updatedFields.add(SERVER_PORT_ID);
+		}
+	}
+
+	public String getServerAddress() {
+		return serverAddress;
+	}
+
+	public void setServerAddress(String serverAddress) {
+		if (this.serverAddress != serverAddress) {
+			this.serverAddress = serverAddress;
+			updatedFields.add(SERVER_ADDRESS_ID);
+		}
+	}
+
 	public Context getAppContext() {
 		return appContext;
 	}

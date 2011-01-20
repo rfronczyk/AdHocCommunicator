@@ -134,6 +134,10 @@ public class ChatActivity extends Activity implements OnClickListener {
 		startActivity(new Intent(this, SettingsActivity.class));
 	}
 
+	private void serverConnection() {
+		startActivity(new Intent(this, ServerConnectionActivity.class));
+	}
+
 	private void quit() {
 		setResult(RESULT_OK);
 		finish();
@@ -150,6 +154,9 @@ public class ChatActivity extends Activity implements OnClickListener {
 			return true;
 		case R.id.settings:
 			settings();
+			return true;
+		case R.id.server_connection:
+			serverConnection();
 			return true;
 		case R.id.quit:
 			quit();

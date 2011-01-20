@@ -41,25 +41,8 @@ public class ChatService extends Service implements MessageListener {
 	private AppConfig config;
 	private BroadcastReceiver mBroadcastReceiver;
 	private boolean reload;
-	private boolean connected = true;
-	private InputStream inputStream;
-	private OutputStream outputStream;
-	
-	private Thread messageReceivingThread = new Thread(new Runnable(){
-		@Override
-		public void run() {
-			while (connected) {
-				try {
-					Message msg = Message.parseFrom(inputStream);
-					sendMessage(new Message(msg.getBody().getBytes(), msg.getSender(), msg.getDate(), msg.getGroupName()), false);
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch(ChatMessageException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-	});
+	private ServerConnection serverConnection;
+
 	
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -69,7 +52,6 @@ public class ChatService extends Service implements MessageListener {
 	private void startService() {
 		mListeningThread = new ListeningThread();
 		mListeningThread.start();
-		messageReceivingThread.start();
 	}
 
 	@Override
@@ -79,15 +61,9 @@ public class ChatService extends Service implements MessageListener {
 		mDbAdapter = (new ChatDbAdapter(this)).open();
 		adHocFlooder = new BroadcastAdHocFlooder(config.getPort(), config.getAddress(),
 												 config.getFlooderHistorySize(), this);	
+		serverConnection = ServerConnection.getInstance(this, adHocFlooder);
 		IntentFilter filter = new IntentFilter(AppConfig.CONFIG_CHANGED);
 		registerReceiver(new ConfigChangedReceiver(), filter);
-		try {
-			Socket s = new Socket("10.0.0.2", 1234);
-			inputStream = s.getInputStream();
-			outputStream = s.getOutputStream();
-		} catch(Exception e) {
-			
-		}
 	}
 
 	@Override
@@ -95,6 +71,7 @@ public class ChatService extends Service implements MessageListener {
 		super.onDestroy();
 		mDbAdapter.close();
 		adHocFlooder.stop();
+		serverConnection.disconnect();
 	}
 
 	@Override
@@ -105,25 +82,13 @@ public class ChatService extends Service implements MessageListener {
 		return Service.START_STICKY;
 	}
 	
-	public void sendMessage(Message msg, boolean ble) throws IOException {
-		announceMessage(msg);
-		if (!msg.getGroupName().equals(DEFAULT_GROUP)) {
-			msg.encrypt(chatGroups.get(msg.getGroupName()));
-		}
-		adHocFlooder.send(msg.toByteArray());
-	}
-
 	public void sendMessage(Message msg) throws IOException {
 		announceMessage(msg);
 		if (!msg.getGroupName().equals(DEFAULT_GROUP)) {
 			msg.encrypt(chatGroups.get(msg.getGroupName()));
 		}
-		try {
-			msg.writeTo(outputStream);
-		} catch (IOException ex) {
-			
-		}
 		adHocFlooder.send(msg.toByteArray());
+		serverConnection.send(msg);
 	}
 
 	private void announceMessage(Message msg) {
@@ -186,22 +151,27 @@ public class ChatService extends Service implements MessageListener {
 	public void onMessageReceive(DatagramPacket packet) {
 		try {
 			Message msg = Message.parseFrom(packet);
-			if (!msg.getGroupName().equals(DEFAULT_GROUP)) {
-				String pass = chatGroups.get(msg.getGroupName());
-				if (chatGroups.containsKey(msg.getGroupName())
-					&& msg.cenBeDecrypted(pass)) {
-					msg.decrypt(pass);
-					announceMessage(msg);
-				}
-			} else {
-				announceMessage(msg);
-			}
+			serverConnection.send(msg);
+			onMessageReceive(msg);
 		} catch (ChatMessageException e) {
 			Log.i(LOGGER_TAG, "Exception while parsing message: " + e.getMessage());
 		}
 
 	}
 	
+	public void onMessageReceive(Message msg) {
+		if (!msg.getGroupName().equals(DEFAULT_GROUP)) {
+			String pass = chatGroups.get(msg.getGroupName());
+			if (chatGroups.containsKey(msg.getGroupName())
+				&& msg.cenBeDecrypted(pass)) {
+				msg.decrypt(pass);
+				announceMessage(msg);
+			}
+		} else {
+			announceMessage(msg);
+		}
+	}
+
 	private class ConfigChangedReceiver extends BroadcastReceiver {
 
 		@Override
