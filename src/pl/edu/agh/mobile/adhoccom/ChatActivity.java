@@ -45,6 +45,7 @@ public class ChatActivity extends Activity implements OnClickListener {
 	public static final int JOIN_GROUP_REQ = 0;
 	public static final int MANAGE_GROUPS_REQ = 1;
 	public static final int SETTINGS_REQ = 2;
+	public static final String SAVED_GROUP_NAME = "SavedGroupName";
 
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
@@ -175,9 +176,19 @@ public class ChatActivity extends Activity implements OnClickListener {
 		}
 	}
 
+	private void loadSavedInstanceState(Bundle savedInstanceState) {
+		if (savedInstanceState != null) {
+			String groupName = savedInstanceState.getString(SAVED_GROUP_NAME);
+			if (groupName != null) {
+				mCurrentGroup = groupName;
+			}
+		}
+	}
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		loadSavedInstanceState(savedInstanceState);
 		setContentView(R.layout.chat_layout);
 		mConfig = AppConfig.getInstance();
 		mConfig.setAppContext(getApplicationContext());
@@ -197,8 +208,13 @@ public class ChatActivity extends Activity implements OnClickListener {
 		super.onDestroy();
 		mDbAdapter.close();
 	}
-
+	
 	@Override
+	public void onSaveInstanceState(Bundle savedInstanceState) {
+		savedInstanceState.putString(SAVED_GROUP_NAME, mCurrentGroup);
+		super.onSaveInstanceState(savedInstanceState);
+	}
+
 	public void onClick(View v) {
 		if (v == mSendButton) {
 			if (mEditMessage.getText().length() > 0) {
