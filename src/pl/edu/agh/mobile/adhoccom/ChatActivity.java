@@ -12,6 +12,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -46,6 +47,16 @@ public class ChatActivity extends Activity implements OnClickListener {
 	public static final int MANAGE_GROUPS_REQ = 1;
 	public static final int SETTINGS_REQ = 2;
 	public static final String SAVED_GROUP_NAME = "SavedGroupName";
+	private static final String USERNAME_ID = "CHAT_SERVICE_USERNAME";
+	private static final String DEFAULT_USERNAME = "Me";
+	private static final String DEFAULT_SERVER_ADDRESS = "";
+	private static final String SERVER_ADDRESS_ID = "CHAT_SERVICE_SERVER_ADRESS";
+	private static final String SERVER_PORT_ID = "CHAT_SERVICE_SERVER_PORT";
+	private static final int DEFAULT_SERVER_PORT = 0;
+	private static final String ADDRESS_ID = "CHAT_SERVICE_ADDRESS";
+	private static final String DEFAULT_ADDRESS = "255.255.255.255";
+	private static final int DEFAULT_PORT = 8888;
+	private static final String PORT_ID = "CHAT_SERVICE_PORT";
 
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
@@ -199,6 +210,7 @@ public class ChatActivity extends Activity implements OnClickListener {
 		setContentView(R.layout.chat_layout);
 		mConfig = AppConfig.getInstance();
 		mConfig.setAppContext(getApplicationContext());
+		loadConfig();
 		initializeWidgets();
 		mDbAdapter = (new ChatDbAdapter(this)).open();
 		Intent svc = new Intent(this, ChatService.class);
@@ -208,14 +220,40 @@ public class ChatActivity extends Activity implements OnClickListener {
 		if (mBroadcastReceiver == null)
 			mBroadcastReceiver = new MessageReceiver();
 		registerReceiver(new MessageReceiver(), filter);
+		filter = new IntentFilter(AppConfig.CONFIG_CHANGED);
+		registerReceiver(new ConfigChangedReceiver(), filter);
+	}
+
+	private void loadConfig() {
+		// TODO Auto-generated method stub
+		SharedPreferences settings = getPreferences(MODE_PRIVATE);
+		mConfig.setUserNickname(settings.getString(USERNAME_ID, DEFAULT_USERNAME));
+		mConfig.setServerAddress(settings.getString(SERVER_ADDRESS_ID, DEFAULT_SERVER_ADDRESS));
+		mConfig.setServerPort(settings.getInt(SERVER_PORT_ID, DEFAULT_SERVER_PORT));
+		mConfig.setAddress(settings.getString(ADDRESS_ID, DEFAULT_ADDRESS));
+		mConfig.setPort(settings.getInt(PORT_ID, DEFAULT_PORT));
+		mConfig.saveConfig();
 	}
 
 	@Override
 	public void onDestroy() {
+		saveConfig();
 		super.onDestroy();
 		mDbAdapter.close();
 	}
 	
+	private void saveConfig() {
+		SharedPreferences settings = getPreferences(MODE_PRIVATE);
+		SharedPreferences.Editor editor = settings.edit();
+		editor.putString(USERNAME_ID, mConfig.getUserNickname());
+		editor.putString(SERVER_ADDRESS_ID, mConfig.getServerAddress());
+		editor.putInt(SERVER_PORT_ID, mConfig.getServerPort());
+		editor.putString(ADDRESS_ID, mConfig.getAddress());
+		editor.putInt(PORT_ID, mConfig.getPort());
+		
+		editor.commit();
+	}
+
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState) {
 		savedInstanceState.putString(SAVED_GROUP_NAME, mCurrentGroup);
@@ -275,5 +313,15 @@ public class ChatActivity extends Activity implements OnClickListener {
 					intent.getStringExtra(ChatService.NEW_MSG_GROUP_EXTRA));
 		}
 
+	}
+	
+	
+	public class ConfigChangedReceiver extends BroadcastReceiver {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			ChatActivity.this.saveConfig();
+		}
+		
 	}
 }

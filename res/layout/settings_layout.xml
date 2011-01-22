@@ -7,6 +7,18 @@
   android:shrinkColumns="1"
   android:stretchColumns="1">
   
+   	<TableRow>
+    	<TextView
+        	android:layout_column="0"
+            android:text="@string/name_label"
+            android:padding="3dip" />
+        <EditText
+            android:text=""
+            android:gravity="right"
+            android:padding="3dip"
+            android:id="@+id/name_input" />
+    </TableRow>
+  
   	<TableRow>
     	<TextView
         	android:layout_column="0"

@@ -105,7 +105,7 @@ public class AppConfig {
 	}
 
 	public void setUserNickname(String userNickname) {
-		if (this.userNickname.equals(userNickname)) {
+		if (!this.userNickname.equals(userNickname)) {
 			this.userNickname = userNickname;
 			updatedFields.add(USER_NICKNAME_ID);
 		}

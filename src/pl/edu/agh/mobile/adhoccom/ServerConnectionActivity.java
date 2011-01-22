@@ -61,6 +61,8 @@ public class ServerConnectionActivity extends Activity implements OnClickListene
 					toast.show();
 				}
 			}
+		} else {
+			finish();
 		}
 	}
 }
