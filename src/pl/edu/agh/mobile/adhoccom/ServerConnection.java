@@ -5,12 +5,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import pl.edu.agh.mobile.adhoccom.chatprotocol.ChatMessageException;
 import pl.edu.agh.mobile.adhoccom.chatprotocol.Message;
 import pl.edu.agh.mobile.adhoccom.flooder.AdHocFlooder;
 import android.util.Log;
-import android.widget.Toast;
 
 public class ServerConnection {
 	private static final String SERVER_CONNECTION_TAG = "SERVER CONNECTION";
@@ -22,8 +23,9 @@ public class ServerConnection {
 	private InputStream inputStream;
 	private OutputStream outputStream;
 	private Socket socket;
+	private ExecutorService executorService;
 
-	private Thread messageReceivingThread = new Thread(new Runnable(){
+	private class ListeningThread implements Runnable {
 		@Override
 		public void run() {
 			while (connected) {
@@ -39,11 +41,12 @@ public class ServerConnection {
 				}
 			}
 		}
-	});
+	}
 
 	private ServerConnection(ChatService service, AdHocFlooder flooder) {
 		this.chatService = service;
 		this.flooder = flooder;
+		this.executorService = Executors.newSingleThreadExecutor();
 	}
 
 	public static ServerConnection getInstance(ChatService service, AdHocFlooder flooder) {
@@ -66,7 +69,7 @@ public class ServerConnection {
 					inputStream = socket.getInputStream();
 					outputStream = socket.getOutputStream();
 					connected = true;
-					messageReceivingThread.start();
+					executorService.execute(new ListeningThread());
 				}
 			}catch(Exception e) {
 				Log.e(SERVER_CONNECTION_TAG, e.getMessage());

@@ -61,6 +61,7 @@ public abstract class AdHocFlooder {
 			e.printStackTrace();
 		} finally {
 			if (socket != null) {
+				beforeClose(socket);
 				socket.close();
 				socket = null;
 			}
@@ -68,6 +69,8 @@ public abstract class AdHocFlooder {
 		
 	}
 	
+	abstract protected void beforeClose(DatagramSocket s);
+
 	abstract protected DatagramSocket getSocket() throws IOException;
 	
 	private byte[] getMessageDigest(DatagramPacket packet) {
@@ -101,7 +104,7 @@ public abstract class AdHocFlooder {
 	}
 	
 	public synchronized void send(DatagramPacket packet) throws IOException {
-		if (socket != null) {
+		if (!stop && socket != null) {
 			messagesHistory.add(new String(getMessageDigest(packet)).hashCode());
 			socket.send(packet);
 			if (messagesHistory.size() > historySize) {

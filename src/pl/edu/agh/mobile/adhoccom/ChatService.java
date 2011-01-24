@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.DatagramPacket;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -59,8 +61,12 @@ public class ChatService extends Service implements MessageListener {
 		super.onCreate();
 		config = AppConfig.getInstance();
 		mDbAdapter = (new ChatDbAdapter(this)).open();
-		adHocFlooder = new BroadcastAdHocFlooder(config.getPort(), config.getAddress(),
-												 config.getFlooderHistorySize(), this);	
+		try {
+			adHocFlooder = new BroadcastAdHocFlooder(config.getPort(), config.getAddress(),
+												 config.getFlooderHistorySize(), this);
+		}catch(UnknownHostException e) {
+			Log.e(LOGGER_TAG, e.getMessage());
+		}
 		serverConnection = ServerConnection.getInstance(this, adHocFlooder);
 		IntentFilter filter = new IntentFilter(AppConfig.CONFIG_CHANGED);
 		registerReceiver(new ConfigChangedReceiver(), filter);
@@ -173,11 +179,14 @@ public class ChatService extends Service implements MessageListener {
 			AppConfig config = AppConfig.getInstance();
 
 			if (intent.hasExtra(AppConfig.PORT_ID) || intent.hasExtra(AppConfig.ADDRESS_ID)) {
-				flooder.setPort(config.getPort());
-				flooder.setAddress(new InetSocketAddress(config.getAddress(), config.getPort()));
-				
-				ChatService.this.reload = true;
-				ChatService.this.adHocFlooder.stop();
+				try {
+					flooder.setAddress(InetAddress.getByName(config.getAddress()));
+					flooder.setPort(config.getPort());
+					ChatService.this.reload = true;
+					ChatService.this.adHocFlooder.stop();
+				} catch (UnknownHostException e) {
+					Log.e(LOGGER_TAG, e.getMessage());
+				}
 			}
 		}
 		

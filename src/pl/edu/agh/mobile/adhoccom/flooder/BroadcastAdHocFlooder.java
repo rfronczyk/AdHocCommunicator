@@ -4,21 +4,23 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.MulticastSocket;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 
 
 public class BroadcastAdHocFlooder extends AdHocFlooder {
 	
 	private int port;
-	private InetSocketAddress address;
+	private InetAddress address;
 	
-	public BroadcastAdHocFlooder(int port, String address, int historySize) {
+	public BroadcastAdHocFlooder(int port, String address, int historySize) throws UnknownHostException {
 		this(port, address, historySize, null);	
 	}
 	
-	public BroadcastAdHocFlooder(int port, String address, int historySize, MessageListener listener) {
+	public BroadcastAdHocFlooder(int port, String address, int historySize, MessageListener listener) throws UnknownHostException {
 		super(historySize, listener);
-		this.address = new InetSocketAddress(address, port);
+		this.address = InetAddress.getByName(address);
 		this.port = port;
 	}
 	
@@ -30,28 +32,43 @@ public class BroadcastAdHocFlooder extends AdHocFlooder {
 		this.port = port;
 	}
 
-	public InetSocketAddress getAddress() {
+	public InetAddress getAddress() {
 		return address;
 	}
 
-	public void setAddress(InetSocketAddress address) {
+	public void setAddress(InetAddress address) {
 		this.address = address;
 	}
 	
 	public void send(byte[] data) throws SocketException, IOException {
-		send(new DatagramPacket(data, data.length, address));
+		DatagramPacket p = new DatagramPacket(data, data.length);
+		p.setAddress(address);
+		p.setPort(port);
+		send(p);
 	}
 	
 	@Override
 	protected DatagramSocket getSocket() throws IOException {
-		return new DatagramSocket(this.port);
+		if (address.isMulticastAddress()) {
+			MulticastSocket ms = new MulticastSocket(this.port);
+			ms.joinGroup(address);
+			return ms;
+		} else {
+			return new DatagramSocket(this.port);
+		}
 	}
 	
 	public static void main(String[] args) {
-		BroadcastAdHocFlooder flooder = new BroadcastAdHocFlooder(8888, "192,168.0.100", 10);
-		Thread worker = new Thread(flooder.new Sender(flooder, 1));
-		worker.start();
-		flooder.start();
+		BroadcastAdHocFlooder flooder;
+		try {
+			flooder = new BroadcastAdHocFlooder(8888, "192,168.0.100", 10);
+			Thread worker = new Thread(flooder.new Sender(flooder, 1));
+			worker.start();
+			flooder.start();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public class Sender implements Runnable {
@@ -87,6 +104,18 @@ public class BroadcastAdHocFlooder extends AdHocFlooder {
 			}
 			
 			flooder.stop();
+		}
+	}
+
+	@Override
+	protected void beforeClose(DatagramSocket s) {
+		if (s.getLocalAddress().isMulticastAddress()) {
+			MulticastSocket ms = (MulticastSocket)s;
+			try {
+				((MulticastSocket) s).leaveGroup(s.getLocalAddress());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }
