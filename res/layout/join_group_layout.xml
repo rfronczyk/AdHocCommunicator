@@ -19,4 +19,9 @@
     android:text="@string/join"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"/>
+  <Button
+    android:id="@+id/scan_barcode"
+    android:text="@string/scan_barcode"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"/>
 </LinearLayout>

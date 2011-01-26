@@ -50,6 +50,10 @@ public class ChatService extends Service implements MessageListener {
 	public IBinder onBind(Intent intent) {
 		return mBinder;
 	}
+	
+	public String getGroupPassword(String groupName) {
+		return chatGroups.get(groupName);
+	}
 
 	private void startService() {
 		mListeningThread = new ListeningThread();

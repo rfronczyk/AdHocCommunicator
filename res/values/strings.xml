@@ -32,4 +32,6 @@
 	<string name="disconnect_label">disconnect</string>
 	<string name="server_connection">Server Connection</string>
 	<string name="name_label">Name</string>
+	<string name="generate_barcode">Generate Barcode</string>
+	<string name="scan_barcode">Scan Barcode</string>
 </resources>

@@ -153,6 +153,20 @@ public class ChatActivity extends Activity implements OnClickListener {
 		setResult(RESULT_OK);
 		finish();
 	}
+	
+	private void generateBarcode() {
+		IntentIntegrator.shareText(this, getGroupDescriptionString());
+	}
+
+	private String getGroupDescriptionString() {
+		StringBuilder desc = new StringBuilder();
+		
+		desc.append(mCurrentGroup);
+		desc.append('|');
+		desc.append(mChatService.getGroupPassword(mCurrentGroup));
+		
+		return desc.toString();
+	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -171,6 +185,9 @@ public class ChatActivity extends Activity implements OnClickListener {
 			return true;
 		case R.id.quit:
 			quit();
+			return true;
+		case R.id.generate_barcode:
+			generateBarcode();
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);
